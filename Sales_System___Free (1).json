@@ -1,0 +1,1190 @@
+{
+  "name": "Sales System - Free",
+  "nodes": [
+    {
+      "parameters": {
+        "formTitle": "Lead Automation ",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "Enter the Apollo search URL",
+              "placeholder": "https://app.apollo.io/#/people?page=1&contactEmailStatusV2[]=verified&contactEmailExcludeCatchAll=true&personTitles[]=founder&personTitles[]=cofounder&personTitles[]=partner&personLocations[]=United%20States&qKeywords=marketing%20agency&sortAscending=false&sortByField=recommendations_score",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Enter the Google Sheet URL",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Give a name to the sheet where your leads will be stored",
+              "placeholder": "My new leads",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Give a name to the campaign ",
+              "placeholder": "My First Campaign",
+              "requiredField": true
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.2,
+      "position": [
+        120,
+        -380
+      ],
+      "id": "f0f01a85-a3b1-4606-829e-e4fb1d4ce7a5",
+      "name": "On form submission",
+      "webhookId": "4595e6a9-fb7d-484b-8d9d-93235005940a"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.apify.com/v2/acts/code_crafter~apollo-io-scraper/run-sync-get-dataset-items?token={PASTE_YOUR_TOKEN_HERE}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBearerAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n    \"cleanOutput\": false,\n    \"fileName\": \"n8ntest\",\n    \"totalRecords\": 2,\n    \"url\": \"{{ $json['Enter the Apollo search URL'] }}\"\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        120,
+        -140
+      ],
+      "id": "6481e56f-8459-4937-9385-4cb330af34c8",
+      "name": "Apify - Scrape Apollo",
+      "credentials": {
+        "httpBearerAuth": {
+          "id": "uCUSGeHfy1hlkPct",
+          "name": "Apify Token"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "https://api.apify.com/v2/acts/code_crafter~apollo-io-scraper/runs/last/dataset/items?token={PASTE_YOUR_TOKEN_HERE}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBearerAuth",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        380,
+        -140
+      ],
+      "id": "8a5494e0-0075-423f-b38f-a16a7bd8eb5b",
+      "name": "Apify - Get Dataset",
+      "credentials": {
+        "httpBearerAuth": {
+          "id": "uCUSGeHfy1hlkPct",
+          "name": "Apify Token"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "compare": "selectedFields",
+        "fieldsToCompare": "linkedin_url",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.removeDuplicates",
+      "typeVersion": 2,
+      "position": [
+        620,
+        -140
+      ],
+      "id": "064d99af-914e-41fb-9c2c-64f8d1bf86e9",
+      "name": "Remove Duplicates"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.apify.com/v2/acts/apimaestro~linkedin-profile-detail/run-sync-get-dataset-items?token={PASTE_YOUR_TOKEN_HERE}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBearerAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n    \"username\": \"{{ $json.linkedin_url }}\"\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        880,
+        -140
+      ],
+      "id": "d214666b-b93b-42c2-bce3-96ef4033291c",
+      "name": "Apify - LinkedIn Profile Details",
+      "credentials": {
+        "httpBearerAuth": {
+          "id": "uCUSGeHfy1hlkPct",
+          "name": "Apify Token"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "create",
+        "documentId": {
+          "__rl": true,
+          "value": "={{ $json['Enter the Google Sheet URL'] }}",
+          "mode": "url"
+        },
+        "title": "={{ $json['Give a name to the sheet where your leads will be stored'] }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.6,
+      "position": [
+        420,
+        -380
+      ],
+      "id": "4fa6f5e7-9424-42ce-bef7-d9f6ad650be3",
+      "name": "Create sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "IMI3M6FklNIGqZrG",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "return [\n  {\n    \"Name\": null,\n    \"Last Name\": null,\n    \"Full Name\": null,\n    \"Title\": null,\n    \"Email\": null,\n    \"Company Name\": null,\n    \"Industry\": null,\n    \"Company LinkedIn URL\": null,\n    \"Website\": null,\n    \"LinkedIn URL\": null,\n    \"About\": null,\n    \"Headline\": null,\n    \"Country\": null,\n    \"City\": null,\n    \"Status\": null,\n    \"Personalized Email\": null,\n    \"Personalized DM\": null,\n  }\n];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        740,
+        -380
+      ],
+      "id": "62007417-782c-4192-a163-c8ad0406fab7",
+      "name": "Code"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "={{ $('On form submission').item.json['Enter the Google Sheet URL'] }}",
+          "mode": "url"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "={{ $('Create sheet').item.json.sheetId }}",
+          "mode": "id"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Name",
+              "displayName": "Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Last Name",
+              "displayName": "Last Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Full Name",
+              "displayName": "Full Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Title",
+              "displayName": "Title",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Email",
+              "displayName": "Email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Company Name",
+              "displayName": "Company Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Industry",
+              "displayName": "Industry",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Company LinkedIn URL",
+              "displayName": "Company LinkedIn URL",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Website",
+              "displayName": "Website",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "LinkedIn URL",
+              "displayName": "LinkedIn URL",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "About",
+              "displayName": "About",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Headline",
+              "displayName": "Headline",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Country",
+              "displayName": "Country",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "City",
+              "displayName": "City",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "State",
+              "displayName": "State",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Personalized Email",
+              "displayName": "Personalized Email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Personalized DM",
+              "displayName": "Personalized DM",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.6,
+      "position": [
+        1060,
+        -380
+      ],
+      "id": "00451e70-aa6f-4ee0-9e7f-faf5a0659940",
+      "name": "Create headers",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "IMI3M6FklNIGqZrG",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        1420,
+        -140
+      ],
+      "id": "1e16276d-4cc9-4530-80cd-f9f8aa314007",
+      "name": "Loop Over Items"
+    },
+    {
+      "parameters": {
+        "amount": 2
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        1760,
+        -40
+      ],
+      "id": "a6e33106-90a8-493a-955c-a54bf4968a34",
+      "name": "Wait",
+      "webhookId": "c7661062-ad92-430a-962a-3009cc98a388"
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-4o-mini",
+          "mode": "list",
+          "cachedResultName": "GPT-4O-MINI"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "You are a helpful, intelligent writing assistant.",
+              "role": "system"
+            },
+            {
+              "content": "You tasks is to take as input a bunch of personal information about a prospect, and then design a customized, one-line email ice breaker to imply that the rest of my communique is personalized.\n\nYou'll return this icebreaker in JSON using this format:\n\n{\"icebraker\": \"Hey {name}, \\n\\nReally respect {thing} and love that you're doing {other_thing}. Wanted to run something by you.\"}\n\nHere is a bunch of information about me so that you can make these icebreakers more personalized:\n\nRules:\n- Write in a spartan, laconic tone of voice\n- Weave in context with my personal information wherever possible \n- Keep thinfs very short and follow the format \n- Imply familiarity wherever possible (i.e. if you see an opportunity to imply that i like the same things, believe the same things, or want the same things go for it)\n- Use the above formula when constructing your ice breakers\n- If you see an opportunity to shorten the company name (say, XYZ instead of XYZ Agency) do so wherever possible. More examples: \"Love AMS\" instead of \"Love AMS Professional Services\""
+            },
+            {
+              "content": "Name: Aina \nLast Name: Rakota\nTitle: CEO\nLinkedIn Headline: CEO Founder\nIndustry: Marketing\nCompany Name: Maki agency\nLinkedIn About: I am work as the CEO of Maki, an innovative agency focused on adopting AI."
+            },
+            {
+              "content": "{\"icebreaker\": \"Hey Aina\\n\\nLove what you are doing at Maki. Also working on AI right now, wanted to run something by you.\"}",
+              "role": "assistant"
+            },
+            {
+              "content": "=Name:  {{ $json.Name }}\nLast name: {{ $json['Last Name'] }}\nTitle: {{ $json.Title }}\nCompany name: {{ $json['Company Name'] }}\nAbout section of the lead on LinkedIn: {{ $json.About }}\nLinkedIn headline: {{ $json.Headline }}\nIndustry: {{ $json.Industry }}"
+            }
+          ]
+        },
+        "jsonOutput": true,
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.8,
+      "position": [
+        1980,
+        -40
+      ],
+      "id": "12900ab5-b5e7-467f-be73-85e13af2a857",
+      "name": "OpenAI",
+      "credentials": {
+        "openAiApi": {
+          "id": "Ah9GgwjqHouOE1SR",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "value": "={{ $('On form submission').item.json['Enter the Google Sheet URL'] }}",
+          "mode": "url"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "={{ $('Create sheet').item.json.sheetId }}",
+          "mode": "id"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Email": "={{ $('Add Leads to Sheet').item.json.Email }}",
+            "Personalized Email": "={{ $json.personalized_email }}",
+            "Personalized DM": "={{ $json.personalized_dm }}"
+          },
+          "matchingColumns": [
+            "Email"
+          ],
+          "schema": [
+            {
+              "id": "Name",
+              "displayName": "Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Last Name",
+              "displayName": "Last Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Full Name",
+              "displayName": "Full Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Title",
+              "displayName": "Title",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Email",
+              "displayName": "Email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Company Name",
+              "displayName": "Company Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Industry",
+              "displayName": "Industry",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Company LinkedIn URL",
+              "displayName": "Company LinkedIn URL",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Website",
+              "displayName": "Website",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "LinkedIn URL",
+              "displayName": "LinkedIn URL",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "About",
+              "displayName": "About",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Headline",
+              "displayName": "Headline",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Country",
+              "displayName": "Country",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "City",
+              "displayName": "City",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Personalized Email",
+              "displayName": "Personalized Email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Personalized DM",
+              "displayName": "Personalized DM",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.6,
+      "position": [
+        2580,
+        -40
+      ],
+      "id": "26a962cf-2b4e-4c1e-b487-f61f0843814d",
+      "name": "Set Email",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "IMI3M6FklNIGqZrG",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "48faf5d1-e1a9-42de-ad49-f22b4b01e46e",
+              "name": "personalized_email",
+              "value": "={{ $json.message.content.icebreaker }}\n \nI'm a software/AI engineer. I have built software and automations for big companies, from really complex workflows to automations that have saved +100 hours. \n \nI've developed an AI sales system that automates the process of finding leads, creating ultra-personalized emails, and then reaching out to them automatically. I thought this could be something you might find interesting and this month I am giving it away completely for free to the first 10 agencies that would like to give it a try.\n \nIf you are interested I can show you the system in a 15min call or send you a video - no strings attached. \n\nThanks for the time,\nMoisés",
+              "type": "string"
+            },
+            {
+              "id": "a48c26d1-a2c0-4981-8602-f036d754939c",
+              "name": "personalized_dm",
+              "value": "={{ $json.message.content.icebreaker }}\n\nQuestion, are you doing cold outreach as part of your marketing strategy? \nI know that volume and personalization are key in cold outreach to get good result but usually you need to trade one of the two. So I built a system that can do both. Let me know if you’d be interested to check it out. \nI’m actually giving it away for free in exchange for feedback.",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        2360,
+        -40
+      ],
+      "id": "66c9a631-e8f5-4a95-96ef-7fbd8c415f15",
+      "name": "Set email and dm"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "={{ $('On form submission').item.json['Enter the Google Sheet URL'] }}",
+          "mode": "url"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "={{ $('Create sheet').item.json.sheetId }}",
+          "mode": "id"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Name": "={{ $json.basic_info.first_name }}",
+            "Last Name": "={{ $json.basic_info.last_name }}",
+            "Full Name": "={{ $json.basic_info.fullname }}",
+            "About": "={{ $json.basic_info.about }}",
+            "Country": "={{ $json.basic_info.location.country }}",
+            "City": "={{ $json.basic_info.location.city }}",
+            "LinkedIn URL": "={{ $('Apify - Get Dataset').item.json.linkedin_url }}",
+            "Company LinkedIn URL": "={{ $json.basic_info.current_company_url }}",
+            "Title": "={{ $('Apify - Get Dataset').item.json.title }}",
+            "Company Name": "={{ $('Apify - Get Dataset').item.json.organization_name }}",
+            "Email": "={{ $('Apify - Get Dataset').item.json.email }}",
+            "Website": "={{ $('Apify - Get Dataset').item.json.organization.website_url }}",
+            "Industry": "={{ $('Apify - Get Dataset').item.json.organization.industry }}",
+            "Headline": "={{ $json.basic_info.headline }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Name",
+              "displayName": "Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Last Name",
+              "displayName": "Last Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Full Name",
+              "displayName": "Full Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Title",
+              "displayName": "Title",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Email",
+              "displayName": "Email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Company Name",
+              "displayName": "Company Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Industry",
+              "displayName": "Industry",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Company LinkedIn URL",
+              "displayName": "Company LinkedIn URL",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Website",
+              "displayName": "Website",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "LinkedIn URL",
+              "displayName": "LinkedIn URL",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "About",
+              "displayName": "About",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Headline",
+              "displayName": "Headline",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Country",
+              "displayName": "Country",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "City",
+              "displayName": "City",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Personalized Email",
+              "displayName": "Personalized Email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Personalized DM",
+              "displayName": "Personalized DM",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.6,
+      "position": [
+        1180,
+        -140
+      ],
+      "id": "8b7c2934-41f2-48df-b6c5-485a31b28ac5",
+      "name": "Add Leads to Sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "IMI3M6FklNIGqZrG",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "  return {\n    activateCampaign: false,\n    campaignName: $('On form submission').first().json['Give a name to the campaign '],\n    googleDocURL: $('On form submission').first().json['Enter the Google Sheet URL'],\n    sheetId: $('Create sheet').first().json.sheetId\n  }\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1760,
+        -280
+      ],
+      "id": "5d6a2418-bc84-4479-b8d6-1aa541c17e0d",
+      "name": "Activate Campaign"
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "IIXVfHrSY814dpyu",
+          "mode": "list",
+          "cachedResultName": "Instantly Campaign"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Activate Campaign": "={{ $json.activateCampaign }}",
+            "Google Document URL": "={{ $json.googleDocURL }}",
+            "Sheet Id": "={{ $json.sheetId }}",
+            "Campaign Name": "={{ $json.campaignName }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Activate Campaign",
+              "displayName": "Activate Campaign",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "boolean"
+            },
+            {
+              "id": "Campaign Name",
+              "displayName": "Campaign Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "Google Document URL",
+              "displayName": "Google Document URL",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "Sheet Id",
+              "displayName": "Sheet Id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "number"
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.2,
+      "position": [
+        2040,
+        -280
+      ],
+      "id": "f137aaf9-960a-4c5b-b368-02374b983d31",
+      "name": "Run Instantly Workflow"
+    },
+    {
+      "parameters": {
+        "content": "# Start here:\n\n## Problem: \nCreating successful outreach campaigns can be challenging since you have two variables to optimize for, **personalization** and **volume**. If you want your campaign to succeed you need to send as many dms/emails as possible (volume) but if you want to keep a high reply rate you must personalize your messages, so you end up trading on of the two. \n\nIf only we could do both...\n\n## Solution:\nBased on the above premise, if we could have a system that does both it would be a no brainer to adopt it for your outreach endeavor since you would automate the process of sending hundreds of dms/emails per day (**volume**), while maintaining a very **personalized** touch on every one of them. Which is what this system strives to do.\n\n### So how do we do just that?\n\nWith a combination of AI, n8n, Apify to scrape data and Instantly.\nWe use n8n to create a workflow in which we will do the following:\n1. Receive an Apollo search link you used to find your ICP\n2. Use Apify to scrape those leads\n3. Enhance the leads by scraping the LinkedIn profiles\n4. Use the gathered data to create ultra-personalized emails and dms\n5. Create an Instantly campaign \n6. Upload all your new leads\n7. Start the campaign (optional)\n\nThis will also generate a spreadsheet in Google docs where you'll find all the data that was collected and the LinkedIn dms, ready to be sent.",
+        "height": 760,
+        "width": 620
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        0,
+        -1180
+      ],
+      "id": "3307fddb-121d-4ab5-924b-d5d1cc070a4c",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "content": "## Set up \n\n### Google Sheet\n- Select the Google Sheet node and create a new credential.\n- Select \"Connect using OAuth2\" and sign in with your Google account \n- **Important**: Make sure to give access to all the requested permissions\n- After you create the credential, go and activate it on the rest of Google Sheet nodes.\n### Apify\n- Go to [Apify](https://console.apify.com) and sign up\n- Go to Actors and select the \"API\" button and copy the API Token.\n- Back in n8n, select the nodes with \"Apify\" in their name. For each you'll need to update the url by replacing the {PASTE_YOUR_TOKEN_HERE} with the token you just copied. \n- Then, create a Bearer auth credential and paste the same token there. Reuse this credentials with the Apify nodes.\n### Open AI\n- Go to Open AI and create a new API Token.\n- Back in n8n, open the OpenAI node and create a new credential with your API token.\n- Adjust the prompt to your specific needs.\n### Instantly\n- Sign up on Instantly \n- On the Instantly Campaign workflow you'll need to add the instantly credentials. Go to Instantly and navigate to \"Settings\" > \"Integrations\" > \"API Keys\" > \"Create API Key\".\n- Copy the API key.\n- Go to the \"Create Campaign\" node and create a new bearer auth credential. Use the token you copied on the last step.\n- Do the same for the \"Create Lead\" node.",
+        "height": 760,
+        "width": 700,
+        "color": 4
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        680,
+        -1180
+      ],
+      "id": "218b917d-aa3d-481e-9f6f-941f48baff4f",
+      "name": "Sticky Note1"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "On form submission": {
+      "main": [
+        [
+          {
+            "node": "Create sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Apify - Scrape Apollo": {
+      "main": [
+        [
+          {
+            "node": "Apify - Get Dataset",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Apify - Get Dataset": {
+      "main": [
+        [
+          {
+            "node": "Remove Duplicates",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Remove Duplicates": {
+      "main": [
+        [
+          {
+            "node": "Apify - LinkedIn Profile Details",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Apify - LinkedIn Profile Details": {
+      "main": [
+        [
+          {
+            "node": "Add Leads to Sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create sheet": {
+      "main": [
+        [
+          {
+            "node": "Code",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code": {
+      "main": [
+        [
+          {
+            "node": "Create headers",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create headers": {
+      "main": [
+        [
+          {
+            "node": "Apify - Scrape Apollo",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items": {
+      "main": [
+        [
+          {
+            "node": "Activate Campaign",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Wait",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait": {
+      "main": [
+        [
+          {
+            "node": "OpenAI",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI": {
+      "main": [
+        [
+          {
+            "node": "Set email and dm",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Email": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set email and dm": {
+      "main": [
+        [
+          {
+            "node": "Set Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Add Leads to Sheet": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Activate Campaign": {
+      "main": [
+        [
+          {
+            "node": "Run Instantly Workflow",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "eb4974e4-da01-48ad-b28c-eed2a7ee5f40",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "8d39dbec3cd83ee170c484468ca170f1b388dcfc7b925e1b338c61dc704920db"
+  },
+  "id": "PCajXbSLu65G2ozp",
+  "tags": []
+}
