@@ -1,0 +1,220 @@
+{
+  "name": "Instantly Campaign - Free",
+  "nodes": [
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "={{ $('When Executed by Another Workflow').item.json['Google Document URL'] }}",
+          "mode": "url"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "={{ $('When Executed by Another Workflow').item.json['Sheet Id'] }}",
+          "mode": "id"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.6,
+      "position": [
+        900,
+        0
+      ],
+      "id": "e58b71bc-50c1-4540-80dd-44fd38dce11d",
+      "name": "Google Sheets",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "IMI3M6FklNIGqZrG",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "c130686b-d1be-4b1c-9124-88fde540e7f4",
+              "name": "campaign_body",
+              "value": "={     \"name\": \"{{ $json['Campaign Name'] }}\",     \"campaign_schedule\": {         \"schedules\": [             {                 \"name\": \"My Schedule\",                 \"timing\": {                     \"from\": \"09:00\",                     \"to\": \"17:00\"                 },                 \"days\": {                     \"0\": true,                      \"1\": true,                      \"2\": true,                      \"3\": true,                      \"4\": true,                      \"5\": true                 },                 \"timezone\": \"America/Chicago\"             }         ]     } }",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        460,
+        0
+      ],
+      "id": "63ca00c7-ec5f-4edf-a9f4-e29bb3dc7aa5",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.instantly.ai/api/v2/leads",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBearerAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"campaign\": \"{{ $('Create Campaign').item.json.id }}\",\n  \"email\": \"{{ $json.Email }}\",\n  \"website\": \"{{ $json.Website }}\",\n  \"last_name\": \"{{ $json['Last Name'] }}\",\n  \"first_name\": \"{{ $json.Name }}\",\n  \"company_name\":\"{{ $json['Company Name'] }}\",\n \"personalization\": \"{{ $json[\"Personalized Email\"].replace(/(\\r\\n|\\r|\\n)/g, '\\\\n'); }}\"\n} ",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1140,
+        0
+      ],
+      "id": "21c2ad58-9f60-47bc-ac32-020936240579",
+      "name": "Create Lead",
+      "credentials": {
+        "httpBearerAuth": {
+          "id": "pCTYGokTDcGApV0e",
+          "name": "Instantly"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.instantly.ai/api/v2/campaigns",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBearerAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ $json.campaign_body }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        680,
+        0
+      ],
+      "id": "5302d9b2-3897-435b-8e43-d60cad0c8c84",
+      "name": "Create Campaign",
+      "credentials": {
+        "httpBearerAuth": {
+          "id": "pCTYGokTDcGApV0e",
+          "name": "Instantly"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "workflowInputs": {
+          "values": [
+            {
+              "name": "Activate Campaign",
+              "type": "boolean"
+            },
+            {
+              "name": "Campaign Name"
+            },
+            {
+              "name": "Google Document URL"
+            },
+            {
+              "name": "Sheet Id",
+              "type": "number"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        220,
+        0
+      ],
+      "id": "1b22fc9e-d9f6-4ccd-9df0-7a5d9addc7f3",
+      "name": "When Executed by Another Workflow"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Google Sheets": {
+      "main": [
+        [
+          {
+            "node": "Create Lead",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Create Campaign",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Campaign": {
+      "main": [
+        [
+          {
+            "node": "Google Sheets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Lead": {
+      "main": [
+        []
+      ]
+    },
+    "When Executed by Another Workflow": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "cdb0ae20-241c-4c29-bc6c-377599910036",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "8d39dbec3cd83ee170c484468ca170f1b388dcfc7b925e1b338c61dc704920db"
+  },
+  "id": "9GQcF5c2zkpSoyg0",
+  "tags": []
+}
